@@ -1,0 +1,29 @@
+{
+  "name": "rizwantalks-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RizwanTalks - stick-man video (Remotion, 9:16, HD / FHD / 4K)",
+  "scripts": {
+    "sfx": "python make_sfx.py",
+    "check-audio": "node prepare.mjs",
+    "studio": "node prepare.mjs && remotion studio index.ts",
+    "still": "node prepare.mjs && remotion still index.ts Main-FHD preview.png --frame=200",
+    "render:hd": "node prepare.mjs && remotion render index.ts Main-HD RizwanTalks-HD-720x1280.mp4",
+    "render:fhd": "node prepare.mjs && remotion render index.ts Main-FHD RizwanTalks-FHD-1080x1920.mp4",
+    "render:4k": "node prepare.mjs && remotion render index.ts Main-4K RizwanTalks-4K-2160x3840.mp4",
+    "render:all": "npm run render:hd && npm run render:fhd && npm run render:4k",
+    "setup-github": "node setup-github.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.543",
+    "@remotion/google-fonts": "4.0.543",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.543"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "typescript": "5.6.3"
+  }
+}
