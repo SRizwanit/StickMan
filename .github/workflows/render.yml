@@ -1,0 +1,88 @@
+# RizwanTalks - render the video on GitHub Actions
+#
+# GitHub only runs workflows stored in ".github/workflows/".
+# This project is kept flat (no subfolders), so the file lives here as render.yml.
+# Run once on your computer:   npm run setup-github
+# (it copies this file to .github/workflows/render.yml) then commit + push.
+#
+# Start it from the repo page:  Actions -> "Render RizwanTalks video" -> Run workflow
+# Pick: hd (720x1280) | fhd (1080x1920) | 4k (2160x3840) | all
+# The MP4 files appear under "Artifacts" at the bottom of the finished run.
+
+name: Render RizwanTalks video
+
+on:
+  workflow_dispatch:
+    inputs:
+      quality:
+        description: 'Output quality (all 9:16)'
+        type: choice
+        default: fhd
+        options:
+          - hd
+          - fhd
+          - 4k
+          - all
+  push:
+    tags:
+      - 'v*' # pushing a tag like v1.0 renders everything
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      Q: ${{ inputs.quality || 'all' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: System libraries for headless Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libnss3 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libgbm1 \
+            libasound2t64 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+            libxrandr2 libpango-1.0-0 libcairo2
+
+      - name: Install node packages
+        run: npm ci
+
+      - name: Regenerate sound effects (deterministic)
+        run: |
+          pip install numpy
+          python make_sfx.py
+
+      - name: Background sound check (audio.mp3 is optional)
+        run: node prepare.mjs
+
+      - name: Download Chrome for Remotion
+        run: npx remotion browser ensure
+
+      - name: Render HD 720x1280
+        if: ${{ env.Q == 'hd' || env.Q == 'all' }}
+        run: npm run render:hd
+
+      - name: Render FHD 1080x1920
+        if: ${{ env.Q == 'fhd' || env.Q == 'all' }}
+        run: npm run render:fhd
+
+      - name: Render 4K 2160x3840
+        if: ${{ env.Q == '4k' || env.Q == 'all' }}
+        run: npm run render:4k
+
+      - name: Upload videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: RizwanTalks-videos
+          path: RizwanTalks-*.mp4
+          if-no-files-found: error
